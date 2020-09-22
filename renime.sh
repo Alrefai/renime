@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-SERIES_DIR="${SERIES_DIR:-.}"
+BASE_DIR="${BASE_DIR:-.}"
 
 # Font styling and colors
 boldText=$'\e[1m'
@@ -145,7 +145,7 @@ while [[ -n $1 ]]; do
       exit 1
     fi
 
-    SERIES_DIR=$2
+    BASE_DIR=$2
     shift
     ;;
 
@@ -246,7 +246,7 @@ while IFS= read -r file; do
   tvRenamed=$(
     grep -E 'Old filename|New filename|moved to' <(
       tvnamer --not-batch --dry-run --selectfirst --move \
-        --movedestination "${SERIES_DIR}/%(seriesname)s" "${args[@]}" "${file}"
+        --movedestination "${BASE_DIR}/%(seriesname)s" "${args[@]}" "${file}"
     ) | sed '$!d'
   )
 
@@ -270,7 +270,7 @@ fi
 
 echo
 while IFS= read -r file; do
-  tvnamer --batch --move --movedestination "${SERIES_DIR}/%(seriesname)s" \
+  tvnamer --batch --move --movedestination "${BASE_DIR}/%(seriesname)s" \
     "${args[@]}" "${file}"
 done <"${renamedFiles}"
 

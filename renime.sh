@@ -80,17 +80,19 @@ initialFileRename() {
   local fileName=$1
   local seriesName=$2
   local seasonFormat=$3
+  local fileExt=$4
+  local increment=$5
+
   local newFileName
   newFileName=$(formatFileName "${fileName}" "${seriesName}" "${seasonFormat}")
-  local epNumber
-  epNumber=$(grep -oE 'E\d+(-\d+){0,2}' <<<"${newFileName}" | sed 's/[^0-9]//')
-  local fileExtension=${extension:-${newFileName##*.}}
 
-  if [[ ${incrementBy} ]]; then
-    echo "${newFileName/E[0-9]*/E$((epNumber + incrementBy)).${fileExtension}}"
-  else
-    echo "${newFileName/E[0-9]*/E${epNumber}.${fileExtension}}"
-  fi
+  local epNumber
+  epNumber=$(
+    grep -oE 'E\d+(-\d+){0,2}' <<<"${newFileName}" |
+      perl -pe 's/([0-9]+)/($1+'"${increment:-0}"')/ge'
+  )
+
+  echo "${newFileName/E[0-9]*/${epNumber}.${fileExt:-${newFileName##*.}}}"
 }
 
 validateOptionValue() {
@@ -187,7 +189,11 @@ seasonFormat=$(
 
 dryClean=$(
   while IFS= read -r file; do
-    newFile=$(initialFileRename "${file}" "${series}" "${seasonFormat}")
+    newFile=$(
+      initialFileRename \
+        "${file}" "${series}" "${seasonFormat}" "${extension}" "${incrementBy}"
+    )
+
     echo "${file} -> ${newFile}"
   done <<<"${selectedFiles}"
 )
@@ -211,7 +217,11 @@ fi
 renamedFiles=$(mktemp -t renimeXXXX)
 
 while IFS= read -r file; do
-  newFile=$(initialFileRename "${file}" "${series}" "${seasonFormat}")
+  newFile=$(
+    initialFileRename \
+      "${file}" "${series}" "${seasonFormat}" "${extension}" "${incrementBy}"
+  )
+
   echo "${newFile}" >>"${renamedFiles}"
   mv -v -- "${file}" "${newFile}" 2>/dev/null
 done <<<"${selectedFiles}"

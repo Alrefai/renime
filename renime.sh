@@ -137,6 +137,18 @@ while [[ -n $1 ]]; do
     skipTvNamer=true
     ;;
 
+  --dirname)
+    validateOptionValue "$1" "$2"
+
+    if [[ ! -d $2 ]]; then
+      assertError 'Directory does not exist:' "$2"
+      exit 1
+    fi
+
+    SERIES_DIR=$2
+    shift
+    ;;
+
   --)
     [[ ${skipTvNamer} ]] && skipTvNamer=false
     args=("${@:2}")

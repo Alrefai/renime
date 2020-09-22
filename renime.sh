@@ -58,7 +58,7 @@ safeFilename() {
 }
 
 sanitizeFileName() {
-  sed 's/\[[^][]*\]//g;s/[Ss][0-9]//;s/[Pp]art [0-9]//;s/_/ /g' <<<"$1" |
+  sed 's/\[[^][]*\]//g;s/[Ss][0-9]{1,2}//;s/[Pp]art [0-9]//;s/_/ /g' <<<"$1" |
     safeFilename |
     sed 's/^_//'
 }

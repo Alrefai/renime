@@ -133,6 +133,10 @@ while [[ -n $1 ]]; do
     shift
     ;;
 
+  --skip-init)
+    skipInitial=true
+    ;;
+
   --skip-tvnamer)
     skipTvNamer=true
     ;;
@@ -189,41 +193,43 @@ fi
 selectedFiles=$(fzf -m <<<"${foundFiles}")
 [[ ${selectedFiles} ]] || exit 1
 
-seasonFormat=$(
-  if [[ ${season} ]]; then
-    echo "S${season}"
-  elif [[ -z ${season} && ${season+set} ]]; then
-    echo ''
-  else
-    echo 'S1'
-  fi
-)
+if [[ ${skipInitial} != true ]]; then
+  seasonFormat=$(
+    if [[ ${season} ]]; then
+      echo "S${season}"
+    elif [[ -z ${season} && ${season+set} ]]; then
+      echo ''
+    else
+      echo 'S1'
+    fi
+  )
 
-dryClean=$(
-  while IFS= read -r file; do
-    newFile=$(
-      initialFileRename \
-        "${file}" "${series}" "${seasonFormat}" "${extension}" "${incrementBy}"
-    )
+  dryClean=$(
+    while IFS= read -r file; do
+      newFile=$(
+        initialFileRename \
+          "${file}" "${series}" "${seasonFormat}" "${extension}" "${incrementBy}"
+      )
 
-    echo "${file} -> ${newFile}"
-  done <<<"${selectedFiles}"
-)
+      echo "${file} -> ${newFile}"
+    done <<<"${selectedFiles}"
+  )
 
-filesCount=$(wc -l <<<"${dryClean}")
+  filesCount=$(wc -l <<<"${dryClean}")
 
-confirmRename=$(
-  assertSelection "
+  confirmRename=$(
+    assertSelection "
       Confirm new file name...
       ${redBoldText}${dryClean}${reset}
       Yes
       No
     " --header-lines $((filesCount + 1)) --height 100%
-)
+  )
 
-if [[ ${confirmRename} != 'Yes' ]]; then
-  assertError 'Aborted by user'
-  exit 1
+  if [[ ${confirmRename} != 'Yes' ]]; then
+    assertError 'Aborted by user'
+    exit 1
+  fi
 fi
 
 renamedFiles=$(mktemp -t renimeXXXX)

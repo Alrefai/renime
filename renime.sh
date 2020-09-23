@@ -195,14 +195,14 @@ else
   assertTask 'Awaiting user selection...'
 fi
 
-foundFiles=$(find . -maxdepth 1 -iname "*${term}*")
+foundFiles=$(find . -maxdepth 1 -iname "*${term}*" -type f)
 
 if [[ -z ${foundFiles} ]]; then
   assertError 'No files found.'
   exit 1
 fi
 
-selectedFiles=$(fzf -m <<<"${foundFiles}")
+selectedFiles=$(fzf -m --with-nth 2 --delimiter '/' <<<"${foundFiles}")
 [[ ${selectedFiles} ]] || exit 1
 
 renamedFiles=$(mktemp -t renimeXXXX)
@@ -218,26 +218,21 @@ if [[ ${skipInitial} != true ]]; then
     fi
   )
 
-  dryClean=$(
-    while IFS= read -r file; do
-      newFile=$(
-        initialFileRename \
-          "${file}" "${series}" "${seasonFormat}" "${extension}" "${incrementBy}"
-      )
+  while IFS= read -r file; do
+    newFile=$(
+      initialFileRename \
+        "${file}" "${series}" "${seasonFormat}" "${extension}" "${incrementBy}"
+    )
 
-      echo "${file} -> ${newFile}"
-    done <<<"${selectedFiles}"
-  )
-
-  filesCount=$(wc -l <<<"${dryClean}")
+    echo "${file#.\/} -> ${newFile}"
+  done <<<"${selectedFiles}"
 
   confirmRename=$(
     assertSelection "
-      Confirm new file name...
-      ${redBoldText}${dryClean}${reset}
+      Confirm rename...
       Yes
       No
-    " --header-lines $((filesCount + 1)) --height 100%
+    " --header-lines 1
   )
 
   if [[ ${confirmRename} != 'Yes' ]]; then
@@ -252,7 +247,7 @@ if [[ ${skipInitial} != true ]]; then
     )
 
     echo "${newFile}" >>"${renamedFiles}"
-    mv -v -- "${file}" "${newFile}" 2>/dev/null
+    mv -- "${file}" "${newFile}" 2>/dev/null
   done <<<"${selectedFiles}"
 else
   echo "${selectedFiles}" | tee "${renamedFiles}"

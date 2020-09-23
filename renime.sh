@@ -60,9 +60,12 @@ safeFilename() {
 }
 
 sanitizeFileName() {
-  sed -E 's/\[[^][]*\]//g;s/[Ss][0-9]{1,2}//;s/_/ /g' <<<"$1" |
+  local ext=${1##*.}
+  local fileName=${1%.*}
+  sed -E 's/\[[^][]*\]//g;s/[Ss][0-9]{1,2}//;s/_|\./ /g' <<<"${fileName}" |
     safeFilename |
-    sed 's/^_//'
+    sed 's/^_//' |
+    awk -v ext=".${ext}" '{print $0ext}'
 }
 
 formatFileName() {

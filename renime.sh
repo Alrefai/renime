@@ -118,6 +118,13 @@ while [[ -n $1 ]]; do
 
   --season)
     validateOptionValue "$1" "$2"
+
+    if [[ ! $2 =~ ^[0-9]{1,2}$ ]]; then
+      assertError 'Invalid season number.' \
+        'Season number must be an integer of single digit or double digits.'
+      exit 1
+    fi
+
     season=$2
     shift
     ;;

@@ -193,6 +193,8 @@ fi
 selectedFiles=$(fzf -m <<<"${foundFiles}")
 [[ ${selectedFiles} ]] || exit 1
 
+renamedFiles=$(mktemp -t renimeXXXX)
+
 if [[ ${skipInitial} != true ]]; then
   seasonFormat=$(
     if [[ ${season} ]]; then
@@ -230,19 +232,19 @@ if [[ ${skipInitial} != true ]]; then
     assertError 'Aborted by user'
     exit 1
   fi
+
+  while IFS= read -r file; do
+    newFile=$(
+      initialFileRename \
+        "${file}" "${series}" "${seasonFormat}" "${extension}" "${incrementBy}"
+    )
+
+    echo "${newFile}" >>"${renamedFiles}"
+    mv -v -- "${file}" "${newFile}" 2>/dev/null
+  done <<<"${selectedFiles}"
+else
+  echo "${selectedFiles}" | tee "${renamedFiles}"
 fi
-
-renamedFiles=$(mktemp -t renimeXXXX)
-
-while IFS= read -r file; do
-  newFile=$(
-    initialFileRename \
-      "${file}" "${series}" "${seasonFormat}" "${extension}" "${incrementBy}"
-  )
-
-  echo "${newFile}" >>"${renamedFiles}"
-  mv -v -- "${file}" "${newFile}" 2>/dev/null
-done <<<"${selectedFiles}"
 
 [[ -s ${renamedFiles} && ${skipTvNamer} != true ]] || exit
 echo

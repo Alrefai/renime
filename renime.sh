@@ -251,11 +251,13 @@ echo
 assertTask 'Processing files with tvnamer...'
 
 while IFS= read -r file; do
+  tvNamer=$(
+    tvnamer --not-batch --dry-run --selectfirst --move \
+      --movedestination "${BASE_DIR}/%(seriesname)s" "${args[@]}" "${file}"
+  ) || exit 1
+
   tvRenamed=$(
-    grep -E 'Old filename|New filename|moved to' <(
-      tvnamer --not-batch --dry-run --selectfirst --move \
-        --movedestination "${BASE_DIR}/%(seriesname)s" "${args[@]}" "${file}"
-    ) | sed '$!d'
+    grep -E 'Old filename|New filename|moved to' <<<"${tvNamer}" | sed '$!d'
   )
 
   tvRenamedFile=$(awk -F ' will be moved to ' 'END{print $1}' <<<"${tvRenamed}")

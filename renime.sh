@@ -133,6 +133,10 @@ while [[ -n $1 ]]; do
     season=''
     ;;
 
+  --keep-season)
+    season='keep'
+    ;;
+
   --extension)
     validateOptionValue "$1" "$2"
     extension=$2
@@ -208,20 +212,26 @@ selectedFiles=$(fzf -m --with-nth 2 --delimiter '/' <<<"${foundFiles}")
 renamedFiles=$(mktemp -t renimeXXXX)
 
 if [[ ${skipInitial} != true ]]; then
-  seasonFormat=$(
-    if [[ ${season} ]]; then
+  formatSeason() {
+    local file=$1
+
+    if [[ ${season} && ${season} != 'keep' ]]; then
       echo "S${season}"
+    elif [[ ${season} == 'keep' ]]; then
+      grep -oE '[Ss][0-9]{1,2}' <<<"${file}" || echo 'S1'
     elif [[ -z ${season} && ${season+set} ]]; then
       echo ''
     else
       echo 'S1'
     fi
-  )
+  }
 
   while IFS= read -r file; do
+    seasonFormat=$(formatSeason "${file}")
+
     newFile=$(
       initialFileRename \
-        "${file}" "${series}" "${seasonFormat}" "${extension}" "${incrementBy}"
+        "${file}" "${series}" "${seasonFormat^}" "${extension}" "${incrementBy}"
     )
 
     echo "${file#.\/} -> ${newFile}"
@@ -241,9 +251,11 @@ if [[ ${skipInitial} != true ]]; then
   fi
 
   while IFS= read -r file; do
+    seasonFormat=$(formatSeason "${file}")
+
     newFile=$(
       initialFileRename \
-        "${file}" "${series}" "${seasonFormat}" "${extension}" "${incrementBy}"
+        "${file}" "${series}" "${seasonFormat^}" "${extension}" "${incrementBy}"
     )
 
     echo "${newFile}" >>"${renamedFiles}"

@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -o pipefail
+
 BASE_DIR="${BASE_DIR:-.}"
 
 # Font styling and colors
@@ -251,14 +253,12 @@ echo
 assertTask 'Processing files with tvnamer...'
 
 while IFS= read -r file; do
-  tvNamer=$(
-    tvnamer --not-batch --dry-run --selectfirst --move \
-      --movedestination "${BASE_DIR}/%(seriesname)s" "${args[@]}" "${file}"
-  ) || exit 1
-
   tvRenamed=$(
-    grep -E 'Old filename|New filename|moved to' <<<"${tvNamer}" | sed '$!d'
-  )
+    tvnamer --not-batch --dry-run --selectfirst --move \
+      --movedestination "${BASE_DIR}/%(seriesname)s" "${args[@]}" "${file}" |
+      grep -E 'Old filename|New filename|moved to' |
+      sed '$!d'
+  ) || exit 1
 
   tvRenamedFile=$(awk -F ' will be moved to ' 'END{print $1}' <<<"${tvRenamed}")
   tvRenamedDir=$(awk -F ' will be moved to ' 'END{print $2}' <<<"${tvRenamed}")

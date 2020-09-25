@@ -199,7 +199,7 @@ else
   assertTask 'Awaiting user selection...'
 fi
 
-foundFiles=$(find . -maxdepth 1 -iname "*${term}*" -type f)
+foundFiles=$(find -s . -maxdepth 1 -iname "*${term}*" -type f)
 
 if [[ -z ${foundFiles} ]]; then
   assertError 'No files found.'
